@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -21,8 +22,8 @@ model Reservation {
   roomId        Int
   room          Room              @relation(fields: [roomId], references: [id], onDelete: Cascade)
   date          DateTime          @db.Date
-  startTime     String            // "07:00"
-  endTime       String            // "08:30"
+  startTime     String // "07:00"
+  endTime       String // "08:30"
   requesterName String
   email         String
   phone         String
@@ -35,11 +36,11 @@ model Reservation {
 }
 
 model ReminderLog {
-  id            Int         @id @default(autoincrement())
+  id            Int          @id @default(autoincrement())
   reservationId Int
-  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  reservation   Reservation  @relation(fields: [reservationId], references: [id], onDelete: Cascade)
   type          ReminderType
-  sentAt        DateTime    @default(now())
+  sentAt        DateTime     @default(now())
 }
 
 model Admin {

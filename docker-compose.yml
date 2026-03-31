@@ -8,8 +8,7 @@ services:
       POSTGRES_USER: salas_user
       POSTGRES_PASSWORD: salas_pass
       POSTGRES_DB: salas_reservas
-    ports:
-      - '5459:5432'
+    # PUERTOS ELIMINADOS: La BD ahora solo es accesible por la red interna de Docker
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -34,11 +33,10 @@ services:
       MAIL_PASS: ${MAIL_PASS:-17itfrpm9P5R}
       ADMIN_NOTIFICATION_EMAIL: ${ADMIN_NOTIFICATION_EMAIL:-recepcion@energiapd.com}
       PORT: 3000
-      FRONTEND_URL: http://localhost:8089
+      FRONTEND_URL: http://localhost:8089 
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@epd.com}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin123!}
-    ports:
-      - '3009:3000'
+    # PUERTOS ELIMINADOS: El backend queda protegido detrás del proxy de Nginx
     restart: unless-stopped
 
   frontend:
@@ -49,7 +47,7 @@ services:
     depends_on:
       - backend
     ports:
-      - '8089:80'
+      - '8089:80' # El ÚNICO puerto expuesto hacia tu VPN o hacia internet
     restart: unless-stopped
 
 volumes:
