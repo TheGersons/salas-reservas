@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(netstat -ano)",
+      "Bash(tasklist:*)",
+      "Bash(cmd.exe /c \"tasklist /FI \\\\\"PID eq 25460\\\\\"\")",
+      "Bash(cmd.exe /c \"tasklist /FI \\\\\"PID eq 25460\\\\\" /FO CSV\")",
+      "Bash(cmd.exe /c \"wmic process where processid=25460 get name,processid,commandline 2>&1\")",
+      "Bash(kill -9 25460)",
+      "Bash(cmd.exe /c \"taskkill /F /PID 25460\")",
+      "Bash(powershell -Command \"Get-Process -Id 25460 | Select-Object Id, Name, CPU, Description\" 2>&1)",
+      "Bash(powershell -Command \"Stop-Process -Id 25460 -Force\")",
+      "Bash(curl:*)",
+      "Bash(npx prisma:*)",
+      "Bash(powershell -Command \"Get-Process node | ForEach-Object { Write-Host $_.Id, $_.MainWindowTitle }\" 2>&1)",
+      "Bash(powershell -Command \"Stop-Process -Id 13952 -Force\")",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}

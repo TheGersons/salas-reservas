@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Room {
+  id           Int           @id @default(autoincrement())
+  name         String        @unique
+  description  String?
+  minAttendees Int?
+  reservations Reservation[]
+  createdAt    DateTime      @default(now())
+}
+
+model Reservation {
+  id            Int               @id @default(autoincrement())
+  roomId        Int
+  room          Room              @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  date          DateTime          @db.Date
+  startTime     String            // "07:00"
+  endTime       String            // "08:30"
+  requesterName String
+  email         String
+  phone         String
+  attendees     Int               @default(1)
+  topic         String?
+  status        ReservationStatus @default(PENDING)
+  remindersSent ReminderLog[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+model ReminderLog {
+  id            Int         @id @default(autoincrement())
+  reservationId Int
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  type          ReminderType
+  sentAt        DateTime    @default(now())
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum ReminderType {
+  CONFIRMATION
+  CANCELLATION
+  REMINDER_60
+  REMINDER_30
+  REMINDER_15
+  CUSTOM
+}

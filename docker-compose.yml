@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: salas_db
+    environment:
+      POSTGRES_USER: salas_user
+      POSTGRES_PASSWORD: salas_pass
+      POSTGRES_DB: salas_reservas
+    ports:
+      - '5459:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U salas_user -d salas_reservas']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: salas_backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://salas_user:salas_pass@postgres:5432/salas_reservas
+      JWT_SECRET: ${JWT_SECRET:-cambiar-en-produccion}
+      JWT_EXPIRES_IN: 8h
+      MAIL_USER: ${MAIL_USER:-noreply@energiapd.com}
+      MAIL_PASS: ${MAIL_PASS:-17itfrpm9P5R}
+      ADMIN_NOTIFICATION_EMAIL: ${ADMIN_NOTIFICATION_EMAIL:-recepcion@energiapd.com}
+      PORT: 3000
+      FRONTEND_URL: http://localhost:8089
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@epd.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin123!}
+    ports:
+      - '3009:3000'
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: salas_frontend
+    depends_on:
+      - backend
+    ports:
+      - '8089:80'
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
