@@ -12,11 +12,16 @@ export class NotificationsService {
   constructor() {
     this.transporter = nodemailer.createTransport({
       host: "smtppro.zoho.com",
-      port: 465,
-      secure: true,
+      port: 587,
+      secure: false,
       auth: {
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASS,
+      },
+      connectionTimeout: 5000,
+      tls: {
+        ciphers: "SSLv3",
+        rejectUnauthorized: false,
       },
     });
   }
@@ -142,9 +147,9 @@ export class NotificationsService {
     <tr><td style="padding:4px 0;color:#64748b;font-size:13px;">Correo</td><td style="padding:4px 0;color:#1e40af;font-size:13px;font-weight:600;text-align:right;">${reservation.email}</td></tr>
     <tr><td style="padding:4px 0;color:#64748b;font-size:13px;">Teléfono</td><td style="padding:4px 0;color:#1e40af;font-size:13px;font-weight:600;text-align:right;">${reservation.phone}</td></tr>
     <tr><td style="padding:4px 0;color:#64748b;font-size:13px;">Personas</td><td style="padding:4px 0;color:#1e40af;font-size:13px;font-weight:600;text-align:right;">${reservation.attendees}</td></tr>
-    ${reservation.topic ? `<tr><td style="padding:4px 0;color:#64748b;font-size:13px;">Tema</td><td style="padding:4px 0;color:#1e40af;font-size:13px;font-weight:600;text-align:right;">${reservation.topic}</td></tr>` : ''}
+    ${reservation.topic ? `<tr><td style="padding:4px 0;color:#64748b;font-size:13px;">Tema</td><td style="padding:4px 0;color:#1e40af;font-size:13px;font-weight:600;text-align:right;">${reservation.topic}</td></tr>` : ""}
   </table>
-  <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/admin" style="display:inline-block;margin-top:16px;background:#1d4ed8;color:#ffffff;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none;">Revisar en el panel</a>`;
+  <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}/admin" style="display:inline-block;margin-top:16px;background:#1d4ed8;color:#ffffff;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none;">Revisar en el panel</a>`;
 
     await Promise.all([
       this.send(
@@ -153,7 +158,7 @@ export class NotificationsService {
         this.baseTemplate("Solicitud Recibida", "#3b82f6", content),
       ),
       this.send(
-        process.env.ADMIN_NOTIFICATION_EMAIL ?? '',
+        process.env.ADMIN_NOTIFICATION_EMAIL ?? "",
         `Nueva solicitud de sala — ${reservation.room.name}`,
         this.baseTemplate("Nueva solicitud recibida", "#1d4ed8", adminContent),
       ),
