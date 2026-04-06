@@ -8,6 +8,8 @@ services:
       POSTGRES_USER: salas_user
       POSTGRES_PASSWORD: salas_pass
       POSTGRES_DB: salas_reservas
+      TZ: America/Tegucigalpa       # 🕒 Zona horaria local
+      PGTZ: America/Tegucigalpa
     # PUERTOS ELIMINADOS: La BD ahora solo es accesible por la red interna de Docker
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -36,6 +38,7 @@ services:
       FRONTEND_URL: http://localhost:8089 
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@epd.com}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin123!}
+      TZ: America/Tegucigalpa
     # PUERTOS ELIMINADOS: El backend queda protegido detrás del proxy de Nginx
     restart: unless-stopped
 

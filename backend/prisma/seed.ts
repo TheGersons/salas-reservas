@@ -9,7 +9,7 @@ async function main() {
   // Crear salas
   const rooms = [
     { name: 'Comedor', description: 'Sala de reuniones en el comedor principal', minAttendees: null },
-    { name: 'Sala Joel Osorto', description: 'Sala de conferencias Joel Osorto', minAttendees: 10 },
+    { name: 'Sala Joel Osorto', description: 'Sala de conferencias Joel Osorto', minAttendees: 2 },
   ];
 
   for (const room of rooms) {
