@@ -53,10 +53,10 @@ export class NotificationsService {
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:40px 20px;">
     <tr>
       <td align="center">
-        <table width="580" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+        <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
           <!-- Header -->
           <tr>
-            <td style="background:linear-gradient(135deg,#1d4ed8,#1e40af);padding:32px 40px;">
+            <td style="background:linear-gradient(135deg,#1d4ed8,#1e40af);padding:28px 32px;">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td>
@@ -74,13 +74,13 @@ export class NotificationsService {
           </tr>
           <!-- Body -->
           <tr>
-            <td style="padding:36px 40px;">
+            <td style="padding:28px 32px;">
               ${content}
             </td>
           </tr>
           <!-- Footer -->
           <tr>
-            <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:20px 40px;">
+            <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:16px 32px;">
               <p style="margin:0;color:#94a3b8;font-size:12px;text-align:center;">
                 Sistema de Reservas de Salas — Energía PD<br>
                 Este es un correo automatico, por favor no responder.
