@@ -32,6 +32,8 @@ import { adminApi, roomsApi, Reservation, Room } from '../lib/api';
 
 type ReminderType = 'REMINDER_60' | 'REMINDER_30' | 'REMINDER_15' | 'CUSTOM';
 
+const STATUS_ORDER: Record<string, number> = { PENDING: 0, CONFIRMED: 1, CANCELLED: 2 };
+
 const STATUS_LABEL: Record<string, string> = {
   PENDING: 'Pendiente',
   CONFIRMED: 'Confirmada',
@@ -68,7 +70,7 @@ export default function AdminDashboardPage() {
         roomId: filterRoom,
         date: filterDate || undefined,
       });
-      setReservations(data);
+      setReservations(data.sort((a, b) => (STATUS_ORDER[a.status] ?? 3) - (STATUS_ORDER[b.status] ?? 3)));
     } finally {
       setLoading(false);
     }
