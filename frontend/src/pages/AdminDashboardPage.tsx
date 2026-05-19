@@ -23,12 +23,16 @@ import {
   ChevronLeft,
   ChevronRight,
   CalendarCheck,
+  Repeat,
+  CalendarX,
+  Trash,
 } from 'lucide-react';
 
 const PAGE_SIZE = 5;
 const todayISO = () => new Date().toISOString().split('T')[0];
 import { useAuth } from '../contexts/AuthContext';
-import { adminApi, roomsApi, Reservation, Room } from '../lib/api';
+import { adminApi, roomsApi, Reservation, Room, ReservationSeries } from '../lib/api';
+import BulkReservationModal from '../components/BulkReservationModal';
 
 type ReminderType = 'REMINDER_60' | 'REMINDER_30' | 'REMINDER_15' | 'CUSTOM';
 
@@ -58,6 +62,9 @@ export default function AdminDashboardPage() {
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [reminderModal, setReminderModal] = useState<Reservation | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [seriesModal, setSeriesModal] = useState<ReservationSeries | null>(null);
+  const [seriesLoading, setSeriesLoading] = useState(false);
 
   useEffect(() => {
     roomsApi.getAll().then(setRooms);
@@ -127,6 +134,50 @@ export default function AdminDashboardPage() {
       showToast('Error al enviar el recordatorio.', 'error');
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const openSeries = async (seriesId: number) => {
+    setSeriesLoading(true);
+    try {
+      const data = await adminApi.getSeries(seriesId);
+      setSeriesModal(data);
+    } catch {
+      showToast('No se pudo cargar la serie.', 'error');
+    } finally {
+      setSeriesLoading(false);
+    }
+  };
+
+  const handleCancelSeries = async () => {
+    if (!seriesModal) return;
+    if (!confirm('¿Cancelar toda la serie? Las reservas futuras se cancelarán y se notificará al solicitante.')) return;
+    setSeriesLoading(true);
+    try {
+      const res = await adminApi.cancelSeries(seriesModal.id);
+      showToast(`Serie cancelada. ${res.cancelledCount} reserva(s) afectada(s).`, 'success');
+      setSeriesModal(null);
+      load();
+    } catch {
+      showToast('Error al cancelar la serie.', 'error');
+    } finally {
+      setSeriesLoading(false);
+    }
+  };
+
+  const handleDeleteSeries = async () => {
+    if (!seriesModal) return;
+    if (!confirm('¿Eliminar la serie? Se borrarán las reservas futuras de forma permanente.')) return;
+    setSeriesLoading(true);
+    try {
+      await adminApi.deleteSeries(seriesModal.id);
+      showToast('Serie eliminada.', 'success');
+      setSeriesModal(null);
+      load();
+    } catch {
+      showToast('Error al eliminar la serie.', 'error');
+    } finally {
+      setSeriesLoading(false);
     }
   };
 
@@ -236,13 +287,22 @@ export default function AdminDashboardPage() {
               <p className="text-xs sm:text-sm text-gray-400">Gestión y seguimiento de salas</p>
             </div>
           </div>
-          <button
-            onClick={load}
-            className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-all text-sm font-medium"
-          >
-            <RefreshCw className="w-4 h-4" />
-            <span className="hidden sm:inline">Actualizar</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setBulkOpen(true)}
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all text-sm font-semibold"
+            >
+              <Repeat className="w-4 h-4" />
+              <span className="hidden sm:inline">Reserva masiva</span>
+            </button>
+            <button
+              onClick={load}
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-all text-sm font-medium"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span className="hidden sm:inline">Actualizar</span>
+            </button>
+          </div>
         </div>
 
         <div className="p-4 sm:p-8 space-y-4 sm:space-y-6">
@@ -358,6 +418,16 @@ export default function AdminDashboardPage() {
                             <User className="w-3.5 h-3.5 text-gray-400" />
                             <span className="text-sm text-gray-800">{r.requesterName}</span>
                           </div>
+                          {r.seriesId && (
+                            <button
+                              onClick={() => openSeries(r.seriesId!)}
+                              title="Ver serie de reservas"
+                              className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-600 border border-indigo-200 text-xs font-semibold hover:bg-indigo-100 transition-all"
+                            >
+                              <Repeat className="w-3 h-3" />
+                              Serie #{r.seriesId}
+                            </button>
+                          )}
                         </td>
                         <td className="px-5 py-4">
                           <div className="space-y-0.5">
@@ -537,6 +607,115 @@ export default function AdminDashboardPage() {
               >
                 Cancelar
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk reservation modal */}
+      {bulkOpen && (
+        <BulkReservationModal
+          onClose={() => setBulkOpen(false)}
+          onSuccess={() => {
+            setBulkOpen(false);
+            showToast('Serie de reservas creada correctamente.', 'success');
+            load();
+          }}
+        />
+      )}
+
+      {/* Series detail modal */}
+      {seriesModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm"
+            onClick={() => setSeriesModal(null)}
+          />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
+                  <Repeat className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-indigo-100 text-xs">Serie #{seriesModal.id} · {seriesModal.status === 'ACTIVE' ? 'Activa' : 'Cancelada'}</p>
+                  <h3 className="text-white font-bold">{seriesModal.requesterName}</h3>
+                </div>
+              </div>
+              <button
+                onClick={() => setSeriesModal(null)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-xs text-gray-400 uppercase font-semibold">Sala</p>
+                  <p className="text-gray-800 font-medium">{seriesModal.room.name}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 uppercase font-semibold">Horario</p>
+                  <p className="text-gray-800 font-medium">
+                    {seriesModal.startTime} — {seriesModal.endTime}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 uppercase font-semibold">Sesiones</p>
+                  <p className="text-gray-800 font-medium">{seriesModal.totalCount}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 uppercase font-semibold">Rango</p>
+                  <p className="text-gray-800 font-medium">
+                    {formatDate(seriesModal.firstDate)} → {formatDate(seriesModal.lastDate)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="border border-gray-200 rounded-xl overflow-hidden max-h-52 overflow-y-auto">
+                <table className="w-full text-sm">
+                  <tbody className="divide-y divide-gray-100">
+                    {seriesModal.reservations.map((r) => (
+                      <tr key={r.id}>
+                        <td className="px-4 py-2 text-gray-700">{formatDate(r.date)}</td>
+                        <td className="px-4 py-2 text-gray-500">
+                          {r.startTime}–{r.endTime}
+                        </td>
+                        <td className="px-4 py-2">
+                          <span
+                            className={`inline-flex px-2 py-0.5 rounded-md border text-xs font-semibold ${STATUS_COLORS[r.status]}`}
+                          >
+                            {STATUS_LABEL[r.status]}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                {seriesModal.status === 'ACTIVE' && (
+                  <button
+                    onClick={handleCancelSeries}
+                    disabled={seriesLoading}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-amber-200 bg-amber-50 text-amber-700 font-semibold text-sm hover:bg-amber-100 transition-all disabled:opacity-50"
+                  >
+                    <CalendarX className="w-4 h-4" />
+                    Cancelar serie
+                  </button>
+                )}
+                <button
+                  onClick={handleDeleteSeries}
+                  disabled={seriesLoading}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-red-200 bg-red-50 text-red-600 font-semibold text-sm hover:bg-red-100 transition-all disabled:opacity-50"
+                >
+                  <Trash className="w-4 h-4" />
+                  Eliminar serie
+                </button>
+              </div>
             </div>
           </div>
         </div>

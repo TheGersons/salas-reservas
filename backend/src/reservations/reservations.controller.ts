@@ -24,6 +24,10 @@ import {
   UpdateReservationStatusDto,
   GetReservationsQueryDto,
 } from './dto/reservation.dto';
+import {
+  CreateBulkReservationDto,
+  PreviewBulkReservationDto,
+} from './dto/bulk-reservation.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
@@ -94,5 +98,37 @@ export class AdminReservationsController {
     @Body() dto: SendReminderDto,
   ) {
     return this.reservationsService.sendReminder(id, dto.type);
+  }
+
+  // ─── Reservas masivas / series ──────────────────────
+  @Post('bulk/preview')
+  @ApiOperation({ summary: '[Admin] Simular fechas de una serie y detectar conflictos' })
+  previewBulk(@Body() dto: PreviewBulkReservationDto) {
+    return this.reservationsService.previewBulk(dto);
+  }
+
+  @Post('bulk')
+  @ApiOperation({ summary: '[Admin] Crear una serie de reservaciones recurrentes' })
+  createBulk(@Body() dto: CreateBulkReservationDto) {
+    return this.reservationsService.createBulk(dto);
+  }
+
+  @Get('series/:id')
+  @ApiOperation({ summary: '[Admin] Detalle de una serie con todas sus reservas' })
+  getSeries(@Param('id', ParseIntPipe) id: number) {
+    return this.reservationsService.getSeries(id);
+  }
+
+  @Patch('series/:id/cancel')
+  @ApiOperation({ summary: '[Admin] Cancelar toda la serie (instancias futuras)' })
+  cancelSeries(@Param('id', ParseIntPipe) id: number) {
+    return this.reservationsService.cancelSeries(id);
+  }
+
+  @Delete('series/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: '[Admin] Eliminar la serie (borra instancias futuras)' })
+  deleteSeries(@Param('id', ParseIntPipe) id: number) {
+    return this.reservationsService.deleteSeries(id);
   }
 }

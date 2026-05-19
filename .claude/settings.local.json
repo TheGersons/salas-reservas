@@ -16,7 +16,18 @@
       "Bash(npx prisma:*)",
       "Bash(powershell -Command \"Get-Process node | ForEach-Object { Write-Host $_.Id, $_.MainWindowTitle }\" 2>&1)",
       "Bash(powershell -Command \"Stop-Process -Id 13952 -Force\")",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(cd C:\\\\Repositorio Energia PD\\\\salas-reservas *)",
+      "Bash(Get-ChildItem *)",
+      "Bash(ls *)",
+      "Bash(npm install *)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(echo \"FRONT_EXIT=$?\")",
+      "Read(//tmp/**)",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const o=JSON.parse\\(d\\);console.log\\('rrule:',o.rrule\\);console.log\\('total:',o.totalDates,'summary:',JSON.stringify\\(o.summary\\)\\);console.log\\('dates:',o.dates.map\\(x=>x.date+'='+x.status\\).join\\(', '\\)\\)}\\)\")",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const o=JSON.parse\\(d\\);console.log\\('rrule:',\\(o.rrule||''\\).replace\\(/\\\\n/g,' '\\)\\);console.log\\('total:',o.totalDates,'summary:',JSON.stringify\\(o.summary\\)\\);console.log\\('dates:',\\(o.dates||[]\\).map\\(x=>x.date+'='+x.status\\).join\\(', '\\)\\)}\\)\")",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const o=JSON.parse\\(d\\);console.log\\('status:',o.status,'totalCount:',o.totalCount,'reservas:',o.reservations.length\\)}\\)\")",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const a=JSON.parse\\(d\\);console.log\\('total reservas:',a.length,'con seriesId:',a.filter\\(r=>r.seriesId\\).length\\)}\\)\")"
     ]
   }
 }

@@ -9,30 +9,54 @@ datasource db {
 }
 
 model Room {
-  id           Int           @id @default(autoincrement())
-  name         String        @unique
+  id           Int                 @id @default(autoincrement())
+  name         String              @unique
   description  String?
   minAttendees Int?
   reservations Reservation[]
-  createdAt    DateTime      @default(now())
+  series       ReservationSeries[]
+  createdAt    DateTime            @default(now())
 }
 
 model Reservation {
-  id            Int               @id @default(autoincrement())
+  id            Int                @id @default(autoincrement())
   roomId        Int
-  room          Room              @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  date          DateTime          @db.Date
+  room          Room               @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  seriesId      Int?
+  series        ReservationSeries? @relation(fields: [seriesId], references: [id], onDelete: SetNull)
+  date          DateTime           @db.Date
   startTime     String // "07:00"
   endTime       String // "08:30"
   requesterName String
   email         String
   phone         String
-  attendees     Int               @default(1)
+  attendees     Int                @default(1)
   topic         String?
-  status        ReservationStatus @default(PENDING)
+  status        ReservationStatus  @default(PENDING)
   remindersSent ReminderLog[]
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+}
+
+model ReservationSeries {
+  id            Int           @id @default(autoincrement())
+  roomId        Int
+  room          Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  requesterName String
+  email         String
+  phone         String
+  attendees     Int           @default(1)
+  topic         String?
+  startTime     String
+  endTime       String
+  rrule         String
+  firstDate     DateTime      @db.Date
+  lastDate      DateTime      @db.Date
+  totalCount    Int
+  status        SeriesStatus  @default(ACTIVE)
+  reservations  Reservation[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
 
 model ReminderLog {
@@ -53,6 +77,11 @@ model Admin {
 enum ReservationStatus {
   PENDING
   CONFIRMED
+  CANCELLED
+}
+
+enum SeriesStatus {
+  ACTIVE
   CANCELLED
 }
 

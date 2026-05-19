@@ -1,8 +1,12 @@
 import { Injectable, Logger } from "@nestjs/common";
 import * as nodemailer from "nodemailer";
-import { Reservation, Room } from "@prisma/client";
+import { Reservation, ReservationSeries, Room } from "@prisma/client";
 
 type ReservationWithRoom = Reservation & { room: Room };
+type SeriesWithDetails = ReservationSeries & {
+  room: Room;
+  reservations: Reservation[];
+};
 
 @Injectable()
 export class NotificationsService {
@@ -236,6 +240,107 @@ export class NotificationsService {
       reservation.email,
       `Recordatorio: Tu reunion comienza ${label}`,
       this.baseTemplate(`Recordatorio — ${label}`, "#3b82f6", content),
+    );
+  }
+
+  private seriesDatesTable(series: SeriesWithDetails, onlyFuture = false): string {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const rows = series.reservations
+      .filter((r) => (onlyFuture ? new Date(r.date) >= today : true))
+      .map(
+        (r) => `
+        <tr>
+          <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;color:#1e3a8a;font-size:13px;font-weight:500;">${this.formatDate(r.date)}</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;color:#1e40af;font-size:13px;font-weight:600;text-align:right;">${r.startTime} — ${r.endTime}</td>
+        </tr>`,
+      )
+      .join("");
+
+    return `
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #dbeafe;border-radius:10px;margin:16px 0;overflow:hidden;">
+        <tr style="background:#eff6ff;">
+          <td style="padding:10px 12px;color:#1e3a8a;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Fecha</td>
+          <td style="padding:10px 12px;color:#1e3a8a;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:right;">Horario</td>
+        </tr>
+        ${rows}
+      </table>`;
+  }
+
+  private seriesInfoBlock(series: SeriesWithDetails, futuresCount?: number): string {
+    const count = futuresCount ?? series.reservations.length;
+    return `
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:10px;margin:20px 0;">
+        <tr>
+          <td style="padding:20px 24px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding:6px 0;border-bottom:1px solid #dbeafe;">
+                  <span style="color:#64748b;font-size:13px;">Sala</span>
+                  <span style="float:right;color:#1e40af;font-weight:600;font-size:13px;">${series.room.name}</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:6px 0;border-bottom:1px solid #dbeafe;">
+                  <span style="color:#64748b;font-size:13px;">Horario</span>
+                  <span style="float:right;color:#1e3a8a;font-weight:600;font-size:13px;">${series.startTime} — ${series.endTime}</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:6px 0;border-bottom:1px solid #dbeafe;">
+                  <span style="color:#64748b;font-size:13px;">Total de sesiones</span>
+                  <span style="float:right;color:#1e3a8a;font-weight:600;font-size:13px;">${count}</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:6px 0;">
+                  <span style="color:#64748b;font-size:13px;">Solicitante</span>
+                  <span style="float:right;color:#1e3a8a;font-weight:600;font-size:13px;">${series.requesterName}</span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>`;
+  }
+
+  // ─── Correo: Resumen de serie creada ─────────────────
+  async sendSeriesSummary(series: SeriesWithDetails) {
+    const content = `
+      <p style="color:#374151;font-size:16px;margin:0 0 4px;">Hola, <strong>${series.requesterName}</strong></p>
+      <p style="color:#6b7280;font-size:14px;margin:0 0 20px;">El administrador ha creado para ti una <strong style="color:#1d4ed8;">serie de reservas confirmadas</strong>. A continuación el detalle.</p>
+      ${this.seriesInfoBlock(series)}
+      <p style="color:#1e3a8a;font-size:14px;font-weight:600;margin:20px 0 8px;">Fechas reservadas</p>
+      ${this.seriesDatesTable(series)}
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px 18px;margin-top:16px;">
+        <p style="margin:0;color:#15803d;font-size:13px;">Todas las sesiones están confirmadas. Recibirás recordatorios automáticos antes de cada una.</p>
+      </div>`;
+
+    await this.send(
+      series.email,
+      `Serie de reservas confirmada — ${series.room.name}`,
+      this.baseTemplate("Serie de reservas confirmada", "#1d4ed8", content),
+    );
+  }
+
+  // ─── Correo: Cancelacion de serie ───────────────────
+  async sendSeriesCancellation(series: SeriesWithDetails) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const cancelled = series.reservations.filter((r) => new Date(r.date) >= today);
+
+    const content = `
+      <p style="color:#374151;font-size:16px;margin:0 0 4px;">Hola, <strong>${series.requesterName}</strong></p>
+      <p style="color:#6b7280;font-size:14px;margin:0 0 20px;">Tu serie de reservas ha sido <strong style="color:#dc2626;">cancelada</strong>. Las sesiones futuras quedan sin efecto.</p>
+      ${this.seriesInfoBlock(series, cancelled.length)}
+      <p style="color:#1e3a8a;font-size:14px;font-weight:600;margin:20px 0 8px;">Sesiones canceladas</p>
+      ${this.seriesDatesTable(series, true)}
+      <p style="color:#6b7280;font-size:13px;margin:16px 0 0;">Si tienes dudas, comunícate con el administrador del sistema.</p>`;
+
+    await this.send(
+      series.email,
+      `Serie de reservas cancelada — ${series.room.name}`,
+      this.baseTemplate("Serie de reservas cancelada", "#ef4444", content),
     );
   }
 
